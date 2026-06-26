@@ -1,7 +1,24 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { prisma } from '../index.js';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
 import { recordStatusChange } from '../utils/history.js';
+
+const matchSchema = z.object({
+  opponent: z.string().min(2, 'Oponente deve ter no mínimo 2 caracteres'),
+  date: z.string().refine((v) => !isNaN(Date.parse(v)), { message: 'Data inválida' }),
+  location: z.string().min(2, 'Local deve ter no mínimo 2 caracteres'),
+});
+
+const matchUpdateSchema = z.object({
+  opponent: z.string().min(2).optional(),
+  date: z.string().refine((v) => !isNaN(Date.parse(v)), { message: 'Data inválida' }).optional(),
+  location: z.string().min(2).optional(),
+  homeScore: z.number().int().min(0).nullable().optional(),
+  opponentScore: z.number().int().min(0).nullable().optional(),
+  isFinished: z.boolean().optional(),
+});
 
 const router = Router();
 
@@ -10,18 +27,15 @@ router.get('/', async (req: Request, res: Response) => {
   return res.json(matches);
 });
 
-router.post('/', authenticate, async (req: Request, res: Response) => {
+router.post('/', authenticate, validate(matchSchema), async (req: Request, res: Response) => {
   const { opponent, date, location } = req.body;
-  if (!opponent || !date || !location) {
-    return res.status(400).json({ error: 'Oponente, data e local são obrigatórios' });
-  }
   const match = await prisma.match.create({
     data: { opponent, date: new Date(date), location },
   });
   return res.status(201).json(match);
 });
 
-router.put('/:id', authenticate, async (req: Request, res: Response) => {
+router.put('/:id', authenticate, validate(matchUpdateSchema), async (req: Request, res: Response) => {
   const { opponent, date, location, homeScore, opponentScore, isFinished } = req.body;
   try {
     const match = await prisma.match.update({

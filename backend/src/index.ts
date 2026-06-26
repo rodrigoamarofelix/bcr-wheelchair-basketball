@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -22,7 +23,8 @@ export const prisma = new PrismaClient();
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 
-app.use(cors());
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+app.use(cors({ origin: corsOrigin.split(',').map((s) => s.trim()), credentials: true }));
 app.use(express.json());
 
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));

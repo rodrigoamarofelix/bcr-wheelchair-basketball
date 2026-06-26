@@ -1,7 +1,28 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { prisma } from '../index.js';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
 import { recordStatusChange } from '../utils/history.js';
+
+const playerSchema = z.object({
+  name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
+  number: z.number().int().positive('Número deve ser positivo'),
+  position: z.enum(['armador', 'ala', 'pivo', 'ala_pivo'], { message: 'Posição inválida' }),
+  functionalClassification: z.number().min(1).max(4.5).nullable().optional(),
+  photoUrl: z.string().max(500).optional().nullable(),
+  bio: z.string().max(2000).optional().nullable(),
+});
+
+const playerUpdateSchema = z.object({
+  name: z.string().min(2).optional(),
+  number: z.number().int().positive().optional(),
+  position: z.enum(['armador', 'ala', 'pivo', 'ala_pivo']).optional(),
+  functionalClassification: z.number().min(1).max(4.5).nullable().optional(),
+  photoUrl: z.string().max(500).optional().nullable(),
+  bio: z.string().max(2000).optional().nullable(),
+  isActive: z.boolean().optional(),
+});
 
 const router = Router();
 
@@ -16,18 +37,15 @@ router.get('/:id', async (req: Request, res: Response) => {
   return res.json(player);
 });
 
-router.post('/', authenticate, async (req: Request, res: Response) => {
+router.post('/', authenticate, validate(playerSchema), async (req: Request, res: Response) => {
   const { name, number, position, functionalClassification, photoUrl, bio } = req.body;
-  if (!name || number === undefined || !position) {
-    return res.status(400).json({ error: 'Nome, número e posição são obrigatórios' });
-  }
   const player = await prisma.player.create({
     data: { name, number, position, functionalClassification, photoUrl, bio },
   });
   return res.status(201).json(player);
 });
 
-router.put('/:id', authenticate, async (req: Request, res: Response) => {
+router.put('/:id', authenticate, validate(playerUpdateSchema), async (req: Request, res: Response) => {
   const { name, number, position, functionalClassification, photoUrl, bio, isActive } = req.body;
   try {
     const player = await prisma.player.update({

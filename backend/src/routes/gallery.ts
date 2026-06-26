@@ -1,7 +1,28 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { prisma } from '../index.js';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
 import { recordStatusChange } from '../utils/history.js';
+
+const galleryImageSchema = z.object({
+  url: z.string().max(500).optional(),
+  caption: z.string().max(500).optional().nullable(),
+  type: z.enum(['image', 'video']).optional(),
+  items: z.array(z.object({
+    url: z.string().max(500),
+    caption: z.string().max(500).optional(),
+    type: z.enum(['image', 'video']).optional(),
+  })).optional(),
+});
+
+const galleryUpdateSchema = z.object({
+  caption: z.string().max(500).optional().nullable(),
+});
+
+const galleryStatusSchema = z.object({
+  isActive: z.boolean({ message: 'Campo isActive é obrigatório' }),
+});
 
 const router = Router();
 
@@ -13,7 +34,7 @@ router.get('/:galleryId/images', async (req: Request, res: Response) => {
   return res.json(images);
 });
 
-router.post('/:galleryId/images', authenticate, async (req: Request, res: Response) => {
+router.post('/:galleryId/images', authenticate, validate(galleryImageSchema), async (req: Request, res: Response) => {
   const { url, caption, type, items } = req.body;
   const galleryId = Number(req.params.galleryId);
   const gallery = await prisma.gallery.findUnique({ where: { id: galleryId } });
@@ -34,7 +55,7 @@ router.post('/:galleryId/images', authenticate, async (req: Request, res: Respon
   return res.status(201).json(image);
 });
 
-router.put('/:galleryId/images/:id', authenticate, async (req: Request, res: Response) => {
+router.put('/:galleryId/images/:id', authenticate, validate(galleryUpdateSchema), async (req: Request, res: Response) => {
   const { caption } = req.body;
   try {
     const item = await prisma.galleryImage.findFirst({
@@ -50,9 +71,8 @@ router.put('/:galleryId/images/:id', authenticate, async (req: Request, res: Res
   }
 });
 
-router.put('/:galleryId/images/:id/status', authenticate, requireRole('admin'), async (req: AuthRequest, res: Response) => {
+router.put('/:galleryId/images/:id/status', authenticate, requireRole('admin'), validate(galleryStatusSchema), async (req: AuthRequest, res: Response) => {
   const { isActive } = req.body;
-  if (isActive === undefined) return res.status(400).json({ error: 'Campo isActive é obrigatório' });
   try {
     const current = await prisma.galleryImage.findFirst({
       where: { id: Number(req.params.id), galleryId: Number(req.params.galleryId) },

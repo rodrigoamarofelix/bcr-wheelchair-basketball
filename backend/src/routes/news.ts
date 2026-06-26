@@ -1,7 +1,27 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { prisma } from '../index.js';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
 import { recordStatusChange } from '../utils/history.js';
+
+const newsSchema = z.object({
+  title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres'),
+  content: z.string().min(10, 'Conteúdo deve ter no mínimo 10 caracteres'),
+  imageUrl: z.string().max(500).optional().nullable(),
+  published: z.boolean().optional(),
+});
+
+const newsUpdateSchema = z.object({
+  title: z.string().min(3).optional(),
+  content: z.string().min(10).optional(),
+  imageUrl: z.string().max(500).optional().nullable(),
+  published: z.boolean().optional(),
+});
+
+const statusSchema = z.object({
+  isActive: z.boolean({ message: 'Campo isActive é obrigatório' }),
+});
 
 const router = Router();
 
@@ -29,18 +49,15 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/', authenticate, async (req: Request, res: Response) => {
+router.post('/', authenticate, validate(newsSchema), async (req: Request, res: Response) => {
   const { title, content, imageUrl, published } = req.body;
-  if (!title || !content) {
-    return res.status(400).json({ error: 'Título e conteúdo são obrigatórios' });
-  }
   const item = await prisma.news.create({
     data: { title, content, imageUrl, published: published ?? false },
   });
   return res.status(201).json(item);
 });
 
-router.put('/:id', authenticate, async (req: Request, res: Response) => {
+router.put('/:id', authenticate, validate(newsUpdateSchema), async (req: Request, res: Response) => {
   const { title, content, imageUrl, published } = req.body;
   try {
     const item = await prisma.news.update({
@@ -53,11 +70,8 @@ router.put('/:id', authenticate, async (req: Request, res: Response) => {
   }
 });
 
-router.put('/:id/status', authenticate, requireRole('admin'), async (req: AuthRequest, res: Response) => {
+router.put('/:id/status', authenticate, requireRole('admin'), validate(statusSchema), async (req: AuthRequest, res: Response) => {
   const { isActive } = req.body;
-  if (isActive === undefined) {
-    return res.status(400).json({ error: 'Campo isActive é obrigatório' });
-  }
   try {
     const current = await prisma.news.findUnique({ where: { id: Number(req.params.id) } });
     if (!current) return res.status(404).json({ error: 'Notícia não encontrada' });
