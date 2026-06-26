@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+  role     String @default("admin")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("admins")
+}
+
+model Player {
+  id                       Int     @id @default(autoincrement())
+  name                     String
+  number                   Int
+  position                 String
+  functionalClassification Float?  @map("functional_classification")
+  photoUrl                 String? @map("photo_url")
+  bio                      String?
+  isActive                 Boolean @default(true) @map("is_active")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  @@map("players")
+}
+
+model Match {
+  id          Int      @id @default(autoincrement())
+  opponent    String
+  date        DateTime
+  location    String
+  homeScore   Int?     @map("home_score")
+  opponentScore Int?   @map("opponent_score")
+  isFinished  Boolean  @default(false) @map("is_finished")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("matches")
+}
+
+model News {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  imageUrl  String?  @map("image_url")
+  published Boolean  @default(false)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("news")
+}
+
+model Gallery {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  coverImage  String?  @map("cover_image")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  images GalleryImage[]
+
+  @@map("galleries")
+}
+
+model GalleryImage {
+  id        Int      @id @default(autoincrement())
+  url       String
+  caption   String?
+  type      String   @default("image")
+  galleryId Int      @map("gallery_id")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  gallery Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+
+  @@map("gallery_images")
+}
+
+model StatusHistory {
+  id         Int      @id @default(autoincrement())
+  entityType String   @map("entity_type")
+  entityId   Int      @map("entity_id")
+  oldStatus  Boolean  @map("old_status")
+  newStatus  Boolean  @map("new_status")
+  changedBy  Int      @map("changed_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("status_history")
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("contact_messages")
+}
+
+model SiteSettings {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+
+  @@map("site_settings")
+}
