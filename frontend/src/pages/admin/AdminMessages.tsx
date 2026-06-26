@@ -29,9 +29,36 @@ export default function AdminMessages() {
     return new Date(dateStr).toLocaleString('pt-BR');
   }
 
+  function exportCSV() {
+    const lines = [['Nome', 'Email', 'Mensagem', 'Lida', 'Data']];
+    messages.forEach((m) => {
+      lines.push([m.name, m.email, m.message.replace(/"/g, '""'), m.read ? 'Sim' : 'Não', formatDate(m.createdAt)]);
+    });
+    const csv = lines.map((l) => l.map((c) => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mensagens.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('CSV exportado!');
+  }
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Mensagens</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Mensagens</h1>
+        {messages.length > 0 && (
+          <button onClick={exportCSV}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Exportar CSV
+          </button>
+        )}
+      </div>
 
       <div className="space-y-3">
         {messages.length === 0 ? (

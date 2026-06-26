@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AccessibilityBar from './AccessibilityBar';
+import Search from './Search';
 
 interface Props {
   teamName?: string;
@@ -31,6 +32,7 @@ export default function Header({ teamName }: Props) {
                 {l.label}
               </a>
             ))}
+            <Search />
             <AccessibilityBar />
             <Link to="/admin/login" className="text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
               Admin

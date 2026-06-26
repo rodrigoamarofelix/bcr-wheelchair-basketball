@@ -1,10 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../index.js';
 import { authenticate } from '../middleware/auth.js';
+import { rateLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', rateLimiter, async (req: Request, res: Response) => {
   try {
     const { name, email, message } = req.body;
     if (!name || !email || !message) {

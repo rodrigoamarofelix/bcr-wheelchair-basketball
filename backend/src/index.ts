@@ -14,6 +14,7 @@ import uploadRoutes from './routes/upload.js';
 import contactRoutes from './routes/contact.js';
 import historyRoutes from './routes/history.js';
 import statsRoutes from './routes/stats.js';
+import rssRoutes from './routes/rss.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -36,6 +37,7 @@ app.use('/api/history', historyRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/rss', rssRoutes);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);

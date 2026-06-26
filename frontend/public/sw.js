@@ -3,7 +3,7 @@ const CACHE = 'timebcr-v1';
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE).then((cache) =>
-      cache.addAll(['/', '/sitemap', '/manifest.json', '/vite.svg'])
+      cache.addAll(['/', '/sitemap', '/manifest.json', '/icon-192.png', '/icon-512.png'])
     )
   );
 });

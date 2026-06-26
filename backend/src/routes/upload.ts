@@ -1,20 +1,15 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs/promises';
+import sharp from 'sharp';
 import { fileURLToPath } from 'url';
 import { authenticate } from '../middleware/auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.resolve(__dirname, '../../uploads');
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, name);
-  },
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -33,20 +28,28 @@ const upload = multer({
 
 const router = Router();
 
-router.post('/', authenticate, upload.array('files', 20), (req: Request, res: Response) => {
+router.post('/', authenticate, upload.array('files', 20), async (req: Request, res: Response) => {
   const files = req.files as Express.Multer.File[];
   if (!files || files.length === 0) {
     return res.status(400).json({ error: 'Nenhum arquivo enviado' });
   }
-  const results = files.map((f) => {
+  const results = await Promise.all(files.map(async (f) => {
     const ext = path.extname(f.originalname).toLowerCase();
     const isVideo = ['.mp4', '.webm', '.mov'].includes(ext);
-    return {
-      url: `/uploads/${f.filename}`,
-      type: isVideo ? 'video' : 'image',
-      filename: f.filename,
-    };
-  });
+    const baseName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+
+    if (isVideo) {
+      const filename = `${baseName}${ext}`;
+      await fs.writeFile(path.join(uploadsDir, filename), f.buffer);
+      return { url: `/uploads/${filename}`, type: 'video', filename };
+    }
+
+    const filename = `${baseName}.webp`;
+    await sharp(f.buffer)
+      .webp({ quality: 80 })
+      .toFile(path.join(uploadsDir, filename));
+    return { url: `/uploads/${filename}`, type: 'image', filename };
+  }));
   return res.json(results);
 });
 
