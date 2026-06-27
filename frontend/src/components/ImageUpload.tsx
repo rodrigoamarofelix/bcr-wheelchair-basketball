@@ -13,6 +13,7 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
   const [uploading, setUploading] = useState(false);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [uploadFailed, setUploadFailed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const previewSrc = localPreview || value;
@@ -41,6 +42,7 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
     if (localPreview) URL.revokeObjectURL(localPreview);
     setLocalPreview(objectUrl);
     setLoadError(false);
+    setUploadFailed(false);
     setUploading(true);
 
     try {
@@ -58,14 +60,19 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
         return;
       }
       if (!res.ok) {
+        if (res.status === 413) {
+          throw new Error('Arquivo muito grande. Use uma imagem de até 5MB.');
+        }
         const err = await res.json().catch(() => ({ error: `Erro ao enviar (status ${res.status})` }));
         throw new Error(err.error || `Erro ao enviar (status ${res.status})`);
       }
       const data = await res.json();
       URL.revokeObjectURL(objectUrl);
       setLocalPreview(null);
+      setUploadFailed(false);
       onChange(data[0]?.url ?? '');
     } catch (err) {
+      setUploadFailed(true);
       toast(err instanceof Error ? err.message : 'Erro ao fazer upload', 'error');
     } finally {
       setUploading(false);
@@ -98,6 +105,7 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
     if (localPreview) URL.revokeObjectURL(localPreview);
     setLocalPreview(null);
     setLoadError(false);
+    setUploadFailed(false);
     onChange('');
   }
 
@@ -132,6 +140,11 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
           {uploading && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <p className="text-white text-sm font-medium">Enviando...</p>
+            </div>
+          )}
+          {uploadFailed && !uploading && (
+            <div className="absolute bottom-0 inset-x-0 bg-amber-500/90 px-2 py-1">
+              <p className="text-white text-xs text-center font-medium">Upload falhou — não salvo</p>
             </div>
           )}
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">

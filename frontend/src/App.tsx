@@ -11,6 +11,8 @@ import AdminGalleryDetail from './pages/admin/AdminGalleryDetail';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminMessages from './pages/admin/AdminMessages';
+import AdminPartners from './pages/admin/AdminPartners';
+import AdminEvents from './pages/admin/AdminEvents';
 import AdminLayout from './pages/admin/AdminLayout';
 import Sitemap from './pages/Sitemap';
 import NotFound from './pages/NotFound';
@@ -33,6 +35,8 @@ export default function App() {
           <Route path="noticias" element={<AdminNews />} />
           <Route path="galerias" element={<AdminGalleries />} />
           <Route path="galerias/:id" element={<AdminGalleryDetail />} />
+          <Route path="parceiros" element={<AdminPartners />} />
+          <Route path="eventos" element={<AdminEvents />} />
           <Route path="configuracoes" element={<AdminSettings />} />
           <Route path="usuarios" element={<AdminUsers />} />
           <Route path="mensagens" element={<AdminMessages />} />

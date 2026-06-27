@@ -2,7 +2,7 @@ const SECTIONS = [
   { href: '/', label: 'Página Inicial' },
   { href: '/#sobre', label: 'Sobre Nós' },
   { href: '/#jogadores', label: 'Jogadores' },
-  { href: '/#jogos', label: 'Jogos' },
+  { href: '/#eventos', label: 'Eventos' },
   { href: '/#noticias', label: 'Notícias' },
   { href: '/#galeria', label: 'Galeria' },
   { href: '/#contato', label: 'Contato' },

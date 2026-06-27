@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 
 interface Result {
-  type: 'jogador' | 'jogo' | 'noticia';
+  type: 'jogador' | 'evento' | 'noticia';
   label: string;
   href: string;
   detail: string;
@@ -43,12 +43,12 @@ export default function Search() {
         items.filter((i) => i.name.toLowerCase().includes(q))
           .map((i) => ({ type: 'jogador' as const, label: i.name, href: `/#jogadores`, detail: `#${i.number} • ${i.position}` }))
       ).catch(() => [] as Result[]),
-      api.matches.list().then((items: { id: number; opponent: string; location: string; date: string }[]) =>
-        items.filter((i) => i.opponent.toLowerCase().includes(q) || i.location.toLowerCase().includes(q))
-          .map((i) => ({ type: 'jogo' as const, label: `vs ${i.opponent}`, href: `/#jogos`, detail: i.location }))
+      api.events.list().then((items: { id: number; title: string; schedule: string; location: string; isActive: boolean }[]) =>
+        items.filter((i) => i.isActive && (i.title.toLowerCase().includes(q) || i.location.toLowerCase().includes(q)))
+          .map((i) => ({ type: 'evento' as const, label: i.title, href: `/#eventos`, detail: `${i.schedule} • ${i.location}` }))
       ).catch(() => [] as Result[]),
-    ]).then(([news, players, matches]) => {
-      setResults([...news, ...players, ...matches].slice(0, 10));
+    ]).then(([news, players, events]) => {
+      setResults([...news, ...players, ...events].slice(0, 10));
     }).finally(() => setLoading(false));
   }, [query]);
 
@@ -77,7 +77,7 @@ export default function Search() {
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Pesquisar jogadores, notícias..."
+          placeholder="Pesquisar jogadores, eventos..."
           className="w-64 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
           aria-label="Pesquisar no site"
         />
@@ -95,7 +95,7 @@ export default function Search() {
                 className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
                 onClick={() => { setOpen(false); setQuery(''); setResults([]); }}>
                 <span className="text-lg shrink-0">
-                  {r.type === 'noticia' ? '📰' : r.type === 'jogador' ? '🏀' : '📅'}
+                  {r.type === 'noticia' ? '📰' : r.type === 'jogador' ? '🏀' : '📆'}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-900 truncate">{r.label}</p>

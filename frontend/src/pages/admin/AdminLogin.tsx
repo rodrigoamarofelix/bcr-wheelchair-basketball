@@ -26,15 +26,17 @@ export default function AdminLogin() {
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">Painel Administrativo</h1>
         <p className="text-sm text-gray-500 text-center mb-6">Faça login para gerenciar o site</p>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" method="post" action="/admin/login" autoComplete="on">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+            <input name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+              autoComplete="username"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
+            <input name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
+              autoComplete="current-password"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" />
           </div>
           {error && <p className="text-red-600 text-sm">{error}</p>}

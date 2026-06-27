@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16
@@ -13,6 +11,42 @@ services:
       - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  backend:
+    build: ./backend
+    container_name: wheelchair_basketball_api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: "postgresql://admin:admin123@postgres:5432/wheelchair_basketball"
+      JWT_SECRET: "51921fd4511b2dd721badc2428c8304fc0aa3109fbc5bc4f0281f3aa858eaa0e"
+      CORS_ORIGIN: "http://localhost:3000,http://localhost:5173"
+      PORT: 3001
+      SITE_URL: "http://localhost:3000"
+    ports:
+      - '3001:3001'
+    volumes:
+      - ./backend/uploads:/app/uploads
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    container_name: wheelchair_basketball_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - '3000:80'
+    networks:
+      - app-network
 
 volumes:
   pgdata:
+
+networks:
+  app-network:
+    driver: bridge

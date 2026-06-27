@@ -102,6 +102,34 @@ export const api = {
     update: (data: Record<string, string>) =>
       request('/settings', { method: 'PUT', body: JSON.stringify(data) }),
   },
+  partners: {
+    list: () => request('/partners'),
+    get: (id: number) => request(`/partners/${id}`),
+    create: (data: Record<string, unknown>) =>
+      request('/partners', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: Record<string, unknown>) =>
+      request(`/partners/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: number) =>
+      request(`/partners/${id}`, { method: 'DELETE' }),
+    toggleStatus: (id: number, isActive: boolean) =>
+      request(`/partners/${id}/status`, { method: 'PUT', body: JSON.stringify({ isActive }) }),
+    getHistory: (id: number) =>
+      request(`/history?entityType=partner&entityId=${id}`),
+  },
+  events: {
+    list: () => request('/events'),
+    get: (id: number) => request(`/events/${id}`),
+    create: (data: Record<string, unknown>) =>
+      request('/events', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: number, data: Record<string, unknown>) =>
+      request(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id: number) =>
+      request(`/events/${id}`, { method: 'DELETE' }),
+    toggleStatus: (id: number, isActive: boolean) =>
+      request(`/events/${id}/status`, { method: 'PUT', body: JSON.stringify({ isActive }) }),
+    getHistory: (id: number) =>
+      request(`/history?entityType=event&entityId=${id}`),
+  },
   stats: {
     get: () => request('/stats'),
   },

@@ -31,12 +31,11 @@ export default function Hero({ title: staticTitle, subtitle: staticSubtitle, bgI
 
   return (
     <section className="relative min-h-screen flex items-center justify-center text-white overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden bg-slate-950">
         <img
           src={bgSrc}
           alt="Basquete em destaque"
-          className="h-full w-full object-cover"
-          style={{ objectPosition: 'center 30%' }}
+          className="absolute top-1/2 left-1/2 w-full min-h-full h-auto max-w-none -translate-x-1/2 -translate-y-1/2"
           onError={handleImageError}
         />
       </div>

@@ -16,6 +16,8 @@ const NAV_ITEMS = [
   { path: '/admin/jogos', label: 'Jogos', icon: '📅' },
   { path: '/admin/noticias', label: 'Notícias', icon: '📰' },
   { path: '/admin/galerias', label: 'Galerias', icon: '🖼️' },
+  { path: '/admin/parceiros', label: 'Parceiros', icon: '🤝' },
+  { path: '/admin/eventos', label: 'Eventos', icon: '📆' },
   { path: '/admin/usuarios', label: 'Usuários', icon: '👤', adminOnly: true },
   { path: '/admin/mensagens', label: 'Mensagens', icon: '✉️' },
   { path: '/admin/configuracoes', label: 'Configurações', icon: '⚙️' },

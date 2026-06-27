@@ -29,28 +29,38 @@ const upload = multer({
 const router = Router();
 
 router.post('/', authenticate, upload.array('files', 20), async (req: Request, res: Response) => {
-  const files = req.files as Express.Multer.File[];
-  if (!files || files.length === 0) {
-    return res.status(400).json({ error: 'Nenhum arquivo enviado' });
-  }
-  const results = await Promise.all(files.map(async (f) => {
-    const ext = path.extname(f.originalname).toLowerCase();
-    const isVideo = ['.mp4', '.webm', '.mov'].includes(ext);
-    const baseName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-
-    if (isVideo) {
-      const filename = `${baseName}${ext}`;
-      await fs.writeFile(path.join(uploadsDir, filename), f.buffer);
-      return { url: `/uploads/${filename}`, type: 'video', filename };
+  try {
+    const files = req.files as Express.Multer.File[];
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
     }
 
-    const filename = `${baseName}.webp`;
-    await sharp(f.buffer)
-      .webp({ quality: 80 })
-      .toFile(path.join(uploadsDir, filename));
-    return { url: `/uploads/${filename}`, type: 'image', filename };
-  }));
-  return res.json(results);
+    // garante que a pasta de uploads exista
+    await fs.mkdir(uploadsDir, { recursive: true });
+
+    const results = await Promise.all(files.map(async (f) => {
+      const ext = path.extname(f.originalname).toLowerCase();
+      const isVideo = ['.mp4', '.webm', '.mov'].includes(ext);
+      const baseName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+
+      if (isVideo) {
+        const filename = `${baseName}${ext}`;
+        await fs.writeFile(path.join(uploadsDir, filename), f.buffer);
+        return { url: `/uploads/${filename}`, type: 'video', filename };
+      }
+
+      const filename = `${baseName}.webp`;
+      await sharp(f.buffer)
+        .webp({ quality: 80 })
+        .toFile(path.join(uploadsDir, filename));
+      return { url: `/uploads/${filename}`, type: 'image', filename };
+    }));
+    return res.json(results);
+  } catch (err) {
+    console.error('Upload error:', err);
+    const message = err instanceof Error ? err.message : 'Erro ao processar upload';
+    return res.status(500).json({ error: message });
+  }
 });
 
 export { upload };
