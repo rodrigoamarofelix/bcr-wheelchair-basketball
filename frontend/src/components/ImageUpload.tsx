@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useToast } from './Toast';
 
 interface ImageUploadProps {
@@ -11,7 +11,21 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
   const { toast } = useToast();
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const previewSrc = localPreview || value;
+
+  useEffect(() => {
+    setLoadError(false);
+  }, [previewSrc]);
+
+  useEffect(() => {
+    return () => {
+      if (localPreview) URL.revokeObjectURL(localPreview);
+    };
+  }, [localPreview]);
 
   async function uploadFile(file: File) {
     if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) {
@@ -22,7 +36,13 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
       toast('A imagem deve ter no máximo 5MB', 'error');
       return;
     }
+
+    const objectUrl = URL.createObjectURL(file);
+    if (localPreview) URL.revokeObjectURL(localPreview);
+    setLocalPreview(objectUrl);
+    setLoadError(false);
     setUploading(true);
+
     try {
       const formData = new FormData();
       formData.append('files', file);
@@ -32,11 +52,18 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
+      if (res.status === 401) {
+        toast('Sessão expirada. Faça login novamente.', 'error');
+        window.location.href = '/admin/login';
+        return;
+      }
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Erro ao enviar' }));
-        throw new Error(err.error || 'Erro ao enviar');
+        const err = await res.json().catch(() => ({ error: `Erro ao enviar (status ${res.status})` }));
+        throw new Error(err.error || `Erro ao enviar (status ${res.status})`);
       }
       const data = await res.json();
+      URL.revokeObjectURL(objectUrl);
+      setLocalPreview(null);
       onChange(data[0]?.url ?? '');
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Erro ao fazer upload', 'error');
@@ -68,16 +95,45 @@ export default function ImageUpload({ value, onChange, label }: ImageUploadProps
   }
 
   function handleRemove() {
+    if (localPreview) URL.revokeObjectURL(localPreview);
+    setLocalPreview(null);
+    setLoadError(false);
     onChange('');
+  }
+
+  function handleImageError() {
+    if (localPreview) return;
+    setLoadError(true);
+    toast('Não foi possível carregar a imagem. Faça upload novamente ou remova.', 'error');
   }
 
   return (
     <div>
       {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
 
-      {value ? (
+      {previewSrc ? (
         <div className="relative group rounded-lg overflow-hidden border border-gray-300 w-40 aspect-[3/4]">
-          <img src={value} alt="Preview" className="w-full h-full object-cover" />
+          {loadError ? (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 p-3 text-center">
+              <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p className="text-xs text-gray-500">Imagem indisponível</p>
+            </div>
+          ) : (
+            <img
+              src={previewSrc}
+              alt="Preview"
+              className="w-full h-full object-cover"
+              onError={handleImageError}
+            />
+          )}
+          {uploading && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <p className="text-white text-sm font-medium">Enviando...</p>
+            </div>
+          )}
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
             <button type="button" onClick={handleRemove}
               className="bg-red-600 text-white px-3 py-1.5 rounded text-sm hover:bg-red-700">
